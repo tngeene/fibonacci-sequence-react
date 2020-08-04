@@ -1,0 +1,57 @@
+version: '3'
+
+services:
+    postgres:
+        container_name: fibonacci_postgres
+        build:
+            context: ./postgres
+            dockerfile: Dockerfile.dev
+        environment:
+            LC_ALL: ${LC_ALL}
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
+            PG_PORT: 5432
+        restart: unless-stopped
+    redis:
+        image: 'redis:6.0.6-alpine'
+    api:
+        build:
+            context: ./server
+            dockerfile: Dockerfile.dev
+        volumes:
+            - /app/node_modules
+            - ./server:/app
+        environment:
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+        depends_on:
+            - postgres
+    client:
+        stdin_open: true
+        build:
+            context: ./client
+            dockerfile: Dockerfile.dev
+        volumes:
+            - /app/node_modules
+            - ./client:/app
+    worker:
+        build:
+            context: ./worker
+            dockerfile: Dockerfile.dev
+        volumes:
+             - /app/node_modules
+             - ./worker:/app
+        environment:
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+    nginx:
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile.dev
+        restart: always
+        ports:
+            - '4000:80'
+        depends_on:
+            - api
+            - client
