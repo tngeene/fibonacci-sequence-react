@@ -4,6 +4,9 @@ services:
     - docker
 
 before_install:
+    - cd postgres/init
+    - sudo chmod u+x db-setup.sh
+    - cd ~
     - docker build -t ng254/fibonacci -f ./client/Dockerfile.dev ./client
 
 # series of commands to run for
