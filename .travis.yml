@@ -1,0 +1,27 @@
+language: generic
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t ng254/fibonacci -f ./client/Dockerfile.dev ./client
+
+# series of commands to run for
+# tests to be executed
+script:
+    - docker run -e CI=true ng254/fibonacci yarn test
+
+# commands to run after tests pass
+after_success:
+    - docker build -t ng254/multi-client ./client
+    - docker build -t ng254/multi-nginx ./nginx
+    - docker build -t ng254/multi-server ./server
+    - docker build -t ng254/multi-worker ./worker
+    # LOG In to the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # take images and push to docker hub
+    - docker push ng254/multi-client
+    - docker push ng254/multi-nginx
+    - docker push ng254/multi-server
+    - docker push ng254/multi-worker
+
